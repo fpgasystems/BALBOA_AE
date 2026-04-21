@@ -2,11 +2,15 @@
   "permissions": {
     "allow": [
       "Read(//mnt/scratch/hmaximili/balboa_ae/experiments/aes_ctr/balboa_offload/hw/**)",
-      "Read(//pub/scratch/hmaximili/balboa_ae/experiments/aes_ctr/balboa_offload/hw/**)"
+      "Read(//pub/scratch/hmaximili/balboa_ae/experiments/aes_ctr/balboa_offload/hw/**)",
+      "Read(//mnt/scratch/hmaximili/balboa_ae/experiments/aes_ctr/software_baseline/**)",
+      "Read(//pub/scratch/hmaximili/balboa_ae/experiments/aes_ctr/software_baseline/**)"
     ],
     "additionalDirectories": [
       "/mnt/scratch/hmaximili/balboa_ae/experiments/aes_ctr/balboa_offload/hw",
-      "/pub/scratch/hmaximili/balboa_ae/experiments/aes_ctr/balboa_offload/hw"
+      "/pub/scratch/hmaximili/balboa_ae/experiments/aes_ctr/balboa_offload/hw",
+      "/mnt/scratch/hmaximili/balboa_ae/experiments/aes_ctr",
+      "/pub/scratch/hmaximili/balboa_ae/experiments/aes_ctr"
     ]
   }
 }
