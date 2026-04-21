@@ -25,7 +25,6 @@
   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   */
 
-  #include <any>
   #include <iostream>
   #include <cstdlib>
   
@@ -58,7 +57,7 @@
       boost::program_options::store(boost::program_options::parse_command_line(argc, argv, runtime_options), command_line_arguments);
       boost::program_options::notify(command_line_arguments);
   
-      PR_HEADER("CLI PARAMETERS:");
+      HEADER("CLI PARAMETERS:");
       std::cout << "Server's TCP address: " << server_ip << std::endl;
       std::cout << "Benchmark operation: " << (operation ? "WRITE" : "READ") << std::endl;
       std::cout << "Number of test runs: " << n_runs << std::endl;
@@ -73,25 +72,25 @@
        */
 
         // Create vectors to store information of the parallel QPs
-        std::vector<std::unique_ptr<coyote::cThread<std::any>>> qp_threads;
-        std::vector<bool> transfer_done; 
+        std::vector<std::unique_ptr<coyote::cThread>> qp_threads;
+        std::vector<bool> transfer_done;
         std::vector<int *> h_mems;
-        std::vector<coyote::sgEntry> sg_list;
+        std::vector<coyote::rdmaSg> sg_list;
 
-        // Prep: Do the QP-exchange for all the requires QPs 
+        // Prep: Do the QP-exchange for all the requires QPs
         for(unsigned int i = 0; i < n_parallel_qps; i++) {
             // Create a new cThread for each QP
-            qp_threads.emplace_back(new coyote::cThread<std::any>(DEFAULT_VFPGA_ID, getpid(), 0));
+            qp_threads.emplace_back(new coyote::cThread(DEFAULT_VFPGA_ID, getpid(), 0));
 
             // Initialize the RDMA connection
-            int *mem = (int *) qp_threads[i]->initRDMA(max_size, coyote::defPort+i, server_ip.c_str());
+            int *mem = (int *) qp_threads[i]->initRDMA(max_size, coyote::DEF_PORT+i, server_ip.c_str());
             h_mems.emplace_back(mem);
 
             // None of the transfers is done, so set everything to false
             transfer_done.push_back(false);
 
-            coyote::sgEntry sg;
-            sg.rdma = { .len = max_size };
+            coyote::rdmaSg sg;
+            sg.len = max_size;
             sg_list.emplace_back(sg);
 
             printf("Set up QP-No %d\n", i);
@@ -133,20 +132,20 @@
             for(unsigned int j = 0; j < n_parallel_qps; j++) {
                 // For each QP, start the operation 
                 for(unsigned int k = 0; k < N_THROUGHPUT_REPS; k++) {
-                    coyote::sgEntry sg;
-                    sg.rdma = { .len = max_size };
+                    coyote::rdmaSg sg;
+                    sg.len = max_size;
 
                     if((k%64) == 0)
                     {
                         std::this_thread::sleep_for(std::chrono::nanoseconds(10));
-                        // printf("Inserted a Wait for QP %d \n", j); 
+                        // printf("Inserted a Wait for QP %d \n", j);
                     }
 
                     if(k==N_THROUGHPUT_REPS-1)
                     {
                         printf("Sent a read-request for QP %d in run %d and rep %d\n", j, i, k);
                     }
-                    qp_threads[j]->invoke(coyote::CoyoteOper::REMOTE_RDMA_READ, &sg);
+                    qp_threads[j]->invoke(coyote::CoyoteOper::REMOTE_RDMA_READ, sg);
                 }
             }
 

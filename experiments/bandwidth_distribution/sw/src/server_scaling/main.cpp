@@ -25,7 +25,6 @@
   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   */
 
-  #include <any>
   #include <iostream>
   #include <cstdlib>
   
@@ -54,7 +53,7 @@
       boost::program_options::store(boost::program_options::parse_command_line(argc, argv, runtime_options), command_line_arguments);
       boost::program_options::notify(command_line_arguments);
   
-      PR_HEADER("CLI PARAMETERS:");
+      HEADER("CLI PARAMETERS:");
       std::cout << "Benchmark operation: " << (operation ? "WRITE" : "READ") << std::endl;
       std::cout << "Number of test runs: " << n_runs << std::endl;
       std::cout << "Starting transfer size: " << min_size << std::endl;
@@ -63,27 +62,27 @@
   
       // Allocate Coyothe thread and set-up RDMA connections, buffer etc.
       // initRDMA is explained in more detail in client/main.cpp
-      std::vector<std::unique_ptr<coyote::cThread<std::any>>> qp_threads;
-      std::vector<bool> transfer_done; 
+      std::vector<std::unique_ptr<coyote::cThread>> qp_threads;
+      std::vector<bool> transfer_done;
       std::vector<int *> h_mems;
-      std::vector<coyote::sgEntry> sg_list;
+      std::vector<coyote::rdmaSg> sg_list;
 
-      // Prep: Do the QP-exchange for all the requires QPs 
+      // Prep: Do the QP-exchange for all the requires QPs
       for(unsigned int i = 0; i < n_parallel_qps; i++) {
 
           // Create a new cThread for each QP
-          qp_threads.emplace_back(new coyote::cThread<std::any>(DEFAULT_VFPGA_ID, getpid(), 0));
+          qp_threads.emplace_back(new coyote::cThread(DEFAULT_VFPGA_ID, getpid(), 0));
 
 
           // Initialize the RDMA connection
-          int *mem = (int *) qp_threads[i]->initRDMA(max_size, coyote::defPort+i);
+          int *mem = (int *) qp_threads[i]->initRDMA(max_size, coyote::DEF_PORT+i);
           h_mems.emplace_back(mem);
 
           // None of the transfers is done, so set everything to false
           transfer_done.push_back(false);
 
-          coyote::sgEntry sg;
-          sg.rdma = { .len = max_size };
+          coyote::rdmaSg sg;
+          sg.len = max_size;
           sg_list.emplace_back(sg);
 
 

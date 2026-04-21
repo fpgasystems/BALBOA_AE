@@ -21,6 +21,9 @@ if(INSTANCE STREQUAL "client_scaling")
     include_directories("${CMAKE_SOURCE_DIR}/src/include")
 endif()
 
+# Expose Coyote headers directly (they live under include/coyote/)
+include_directories("${CMAKE_SOURCE_DIR}/../../../Coyote/sw/include/coyote")
+
 # Create build targets and link against required libraries
 set(EXEC test)
 add_executable(${EXEC} ${TARGET_DIR}/main.cpp)
