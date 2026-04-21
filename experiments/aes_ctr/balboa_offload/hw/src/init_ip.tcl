@@ -1,0 +1,5 @@
+create_ip -name ila -vendor xilinx.com -library ip -version 6.2 -module_name ila_perf_rdma
+set_property -dict [list CONFIG.C_PROBE17_WIDTH {128} CONFIG.C_PROBE14_WIDTH {128} CONFIG.C_NUM_OF_PROBES {18} CONFIG.C_EN_STRG_QUAL {1} CONFIG.ALL_PROBE_SAME_MU_CNT {2}] [get_ips ila_perf_rdma]
+
+create_ip -name ila -vendor xilinx.com -library ip -version 6.2 -module_name ila_aes_perf_rdma
+set_property -dict [list CONFIG.C_PROBE3_WIDTH {512} CONFIG.C_PROBE4_WIDTH {64} CONFIG.C_PROBE8_WIDTH {512} CONFIG.C_PROBE9_WIDTH {64} CONFIG.C_PROBE10_WIDTH {32} CONFIG.C_PROBE14_WIDTH {512} CONFIG.C_PROBE15_WIDTH {64} CONFIG.C_PROBE19_WIDTH {512} CONFIG.C_PROBE20_WIDTH {64} CONFIG.C_PROBE21_WIDTH {32} CONFIG.C_NUM_OF_PROBES {22} CONFIG.C_EN_STRG_QUAL {1} CONFIG.ALL_PROBE_SAME_MU_CNT {2}] [get_ips ila_aes_perf_rdma]
