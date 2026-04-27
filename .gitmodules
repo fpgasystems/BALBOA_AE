@@ -1,6 +1,7 @@
 [submodule "Coyote"]
 	path = Coyote
 	url = https://github.com/fpgasystems/Coyote.git
+	branch = artefacts/balboa-ae
 [submodule "balboa_dpi"]
 	path = balboa_dpi
 	url = https://github.com/fpgasystems/AMD-OHC-2024.git
