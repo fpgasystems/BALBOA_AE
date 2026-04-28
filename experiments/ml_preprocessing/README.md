@@ -4,9 +4,9 @@ This artifact reproduces Section 8 (Figures 9 and 10) of the paper, demonstratin
 
 The paper compares three configurations (Figure 8):
 
-1. **Vanilla** — RDMA delivers data to CPU memory; preprocessing runs in software on the CPU; the result is copied to GPU memory. Uses a standard RDMA bitstream without the HLS kernel; not reproduced from this directory.
-2. **FPGA preprocessing + CPU-to-GPU copy** (`main.cpp`) — the `ml_preprocessing` HLS kernel sits inline on the RDMA-RX datapath; the preprocessed payload lands in CPU memory; the client calls `hipMemcpy` after each completion.
-3. **FPGA preprocessing + GPU P2P** (`main_rdma_gpu.cpp`) — same HLS kernel, but the RDMA buffer is registered directly as GPU memory, bypassing the CPU entirely.
+1. **Vanilla** — RDMA delivers data to CPU memory; preprocessing runs in software on the CPU (NumPy); the result is copied to GPU memory. Reproduced from `client_py/` — the standard RDMA-capable CREED / Coyote bitstream is sufficient for this application.
+2. **FPGA preprocessing + CPU-to-GPU copy** (`main.cpp`) — the `ml_preprocessing` HLS kernel sits inline on the RDMA-RX datapath; the preprocessed payload lands in CPU memory; the client calls `hipMemcpy` after each completion. A new bitstream needs to be built that combines CREED with the ML-preprocessing circuits. 
+3. **FPGA preprocessing + GPU P2P** (`main_rdma_gpu.cpp`) — same HLS kernel, but the RDMA buffer is registered directly as GPU memory, bypassing the CPU entirely. Uses the same bitstream as example 2. 
 
 ## Folder Layout
 
@@ -20,7 +20,43 @@ sw/
   src/client/main_rdma_gpu.cpp   Setup ③: GPU-direct RDMA (rename over main.cpp to use)
   src/server/main.cpp            Passive server
   src/client/extract_output.txt  Reference output from a prior run
+client_py/
+  src/rdma_module.cpp            pybind11 C++ extension wrapping Coyote + HIP for Python
+  example_CPU.py                 Setup ①: vanilla CPU baseline (no FPGA, no RDMA required)
+  example.py                     RDMA + Python preprocessing benchmark (requires server)
+  include/constants.hpp          Shared constants (vFPGA ID, GPU ID)
 ```
+
+## Vanilla CPU Baseline (Setup ①, Figure 9)
+
+This setup requires only the client node with an AMD GPU. No FPGA bitstream and no server are needed.
+
+### Build
+
+Install the Python dependencies, then build the pybind11 C++ extension:
+
+```bash
+pip install pybind11 threadpoolctl numpy
+
+cd client_py/
+mkdir build && cd build
+cmake .. [-DAMD_GPU=<arch>] && make
+cd ..
+```
+
+The compiled module (`rdma_module*.so`) is placed in `build/lib/` and loaded automatically by the Python scripts.
+
+### Run
+
+```bash
+python3 example_CPU.py [--threads N] [--n-runs R] [--n-transfers T] [--buffer-size B]
+```
+
+- `--threads`: number of CPU threads for the NumPy preprocessing loop (default 1); sweep 1–N to reproduce the thread-scaling curve in Figure 9.
+- `--n-runs` / `--n-transfers`: averaging repetitions / transfers per data point (defaults 10 / 64).
+- `--buffer-size`: pinned CPU buffer in bytes (default 128 MB).
+
+The preprocessing pipeline matches the FPGA kernel: `max(x, 0)` + `log1p` on the first 16 of 48 int32 columns, modulo 8192 on the remaining 32.
 
 ## Hardware
 
