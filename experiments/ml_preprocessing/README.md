@@ -1,4 +1,4 @@
-# ML Preprocessing Pipeline
+# ML Preprocessing Pipeline (Section 8)
 
 This artifact reproduces Section 8 (Figures 9 and 10) of the paper, demonstrating on-datapath DLRM preprocessing offloaded to the CREED network datapath with direct-to-GPU data delivery. Two FPGA-equipped nodes and at least one AMD GPU are required.
 

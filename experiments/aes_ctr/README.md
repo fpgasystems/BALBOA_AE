@@ -1,9 +1,9 @@
-# AES CTR mode offload
+# AES CTR mode offload - Section 6.3.1
 
 Testing the AES CTR offload in CREED requires a two-fold approach to get both the hardware-accelerated numbers and the software baseline shown in the paper. The process for obtaining these numbers is described below: 
 
 #### CREED-offloaded AES CTR hardware: 
-For this purpose, new bitstreams need to be built, following the standard Coyote approach applied to the directory `aes_ctr/balboa_offload`. The paths in the Cmake-file have been edited to work from the current location of the repository. After obtaining the bitstream, one can use the "plain software" from `Coyote/examples/09_perf_rdma/sw` to run both latency and throughput numbers. 
+For this purpose, new bitstreams need to be built, following the standard Coyote approach applied to the directory `aes_ctr/balboa_offload`. The paths in the Cmake-file have been edited to work from the current location of the repository. After obtaining the bitstream, one can use the "plain software" from `Coyote/examples/09_perf_rdma/sw` to run both latency and throughput numbers. This also means that the same parameters (IP-address for out-of-band connection and QP-exchange, number of repetitions, message size scaling etc.) can be used as before. 
 
 #### SW-Baseline
 
@@ -20,7 +20,7 @@ The following libraries must be installed:
 - OpenSSL (`libssl`, `libcrypto`)
 - pthreads
 
-Both machines must have commercial RNICs that support libverbs for network connectivity.
+Both machines must have commercial RNICs that support libverbs for network connectivity (i.e. Mellanox ConnectX-5). 
 
 **Build**
 
