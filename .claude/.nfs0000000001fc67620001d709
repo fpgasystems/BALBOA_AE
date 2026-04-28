@@ -22,8 +22,7 @@
       "Bash(git commit -m ' *)",
       "Bash(git commit -m 'Add gpu flag to initRDMA for GPU P2P RDMA support *)",
       "Read(//mnt/scratch/hmaximili/balboa_ae/**)",
-      "Read(//pub/scratch/hmaximili/balboa_ae/**)",
-      "Read(//pub/scratch/hmaximili/**)"
+      "Read(//pub/scratch/hmaximili/balboa_ae/**)"
     ],
     "additionalDirectories": [
       "/mnt/scratch/hmaximili/balboa_ae/experiments/aes_ctr/balboa_offload/hw",
