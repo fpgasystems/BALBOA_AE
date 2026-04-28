@@ -1,12 +1,21 @@
 # CMake configuration
 cmake_minimum_required(VERSION 3.5)
+
+# hipcc must be set before project() for the same reason as sw/CMakeLists.txt
+if(NOT DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH "/opt/rocm")
+else()
+    set(ROCM_PATH "$ENV{ROCM_PATH}")
+endif()
+set(CMAKE_CXX_COMPILER "${ROCM_PATH}/bin/hipcc" CACHE STRING "C++ compiler" FORCE)
+
 project(rdma_module LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-# Enable GPU support in the Coyote SW library (sets compiler to hipcc, finds ROCm)
+# Enable GPU support in the Coyote SW library
 set(EN_GPU "1" CACHE STRING "AMD GPU enabled" FORCE)
 
 add_subdirectory(../../../Coyote/sw ${CMAKE_BINARY_DIR}/coyote)
