@@ -1,6 +1,19 @@
 ## Bandwidth Distribution - Section 6.2 
 
-In this argument, server and client spin up multiple QPs between each other and measure the throughput achieved through these parallel connections. By doing so, we can illustrate the fair bandwidth sharing realized through hardened MUXes and arbitration logic within CREED. The same bitstream as for the regular throughput evaluation experiments (built before in `throughput_evaluation` within the Coyote subrepository) can be used, but this experiment requires specialized Coyote software found in this directory. It can be compiled with the same flow described for all other Coyote experiments, but directly in this subdirectory - all paths in the CMake-scripts have beend updated accordingly to match the location of the files in this artefact-repository. To build server and client respectively, one has to specify `-DINSTANCE = server_scaling` or `-DINSTANCE = client_scaling` when calling the cmake-script. Afterwards, the previously built bitstream and driver need to be flashed on the two remote FPGA-nodes, before server- and client-side software are started. When starting the client, one needs to specify the following arguments: 
+In this argument, server and client spin up multiple QPs between each other and measure the throughput achieved through these parallel connections. By doing so, we can illustrate the fair bandwidth sharing realized through hardened MUXes and arbitration logic within CREED. The same bitstream as for the regular throughput evaluation experiments (built before in `throughput_evaluation` within the Coyote subrepository) can be used, but this experiment requires specialized Coyote software found in this directory. It can be compiled with the same flow described for all other Coyote experiments, but directly in this subdirectory - all paths in the CMake-scripts have beend updated accordingly to match the location of the files in this artefact-repository. To build server and client respectively, one has to specify `-DINSTANCE=server_scaling` or `-DINSTANCE=client_scaling` when calling the cmake-script from the `sw/` subdirectory:
+
+```bash
+cd experiments/bandwidth_distribution/sw
+
+mkdir build_server && cd build_server
+cmake ../ -DINSTANCE=server_scaling && make
+cd ..
+
+mkdir build_client && cd build_client
+cmake ../ -DINSTANCE=client_scaling && make
+```
+
+Afterwards, the previously built bitstream and driver need to be flashed on the two remote FPGA-nodes, before server- and client-side software are started. Start the **server** first, then the **client**. When starting the client, one needs to specify the following arguments: 
 - `-i`: IP-address of the management network of the server, used for QP-exchanged (same as for the standard throughput evaluation example). 
 - `-n`: Number of repetitions for better experimental results. 
 - `-p`: Number of parallel QPs evaluated in the experiment - the paper demonstrates up to 32 as shown in Figure 5. 

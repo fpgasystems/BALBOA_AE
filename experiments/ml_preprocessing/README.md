@@ -5,8 +5,8 @@ This artifact reproduces Section 8 (Figures 9 and 10) of the paper, demonstratin
 The paper compares three configurations (Figure 8):
 
 1. **Vanilla** — RDMA delivers data to CPU memory; preprocessing runs in software on the CPU (NumPy); the result is copied to GPU memory. Reproduced from `client_py/` — the standard RDMA-capable CREED / Coyote bitstream is sufficient for this application.
-2. **FPGA preprocessing + CPU-to-GPU copy** (`main.cpp`) — the `ml_preprocessing` HLS kernel sits inline on the RDMA-RX datapath; the preprocessed payload lands in CPU memory; the client calls `hipMemcpy` after each completion. A new bitstream needs to be built that combines CREED with the ML-preprocessing circuits. 
-3. **FPGA preprocessing + GPU P2P** (`main_rdma_gpu.cpp`) — same HLS kernel, but the RDMA buffer is registered directly as GPU memory, bypassing the CPU entirely. Uses the same bitstream as example 2. 
+2. **FPGA preprocessing + CPU-to-GPU copy** - the `ml_preprocessing` HLS kernel sits inline on the RDMA-RX datapath; the preprocessed payload lands in CPU memory; the client calls `hipMemcpy` after each completion. A new bitstream needs to be built that combines CREED with the ML-preprocessing circuits. 
+3. **FPGA preprocessing + GPU P2P** — same HLS kernel, but the RDMA buffer is registered directly as GPU memory, bypassing the CPU entirely. Uses the same bitstream as example 2. 
 
 ## Folder Layout
 
@@ -29,7 +29,7 @@ client_py/
 
 ## Vanilla CPU Baseline (Setup ①, Figure 9)
 
-This setup requires only the client node with an AMD GPU. No FPGA bitstream and no server are needed.
+On the side of the server, we can use the standard server software provided with `sw/src/server/main.cpp`. For the client, we use a python runtime for the usual software to have access to the SW-implementations of the preprocessing operators. 
 
 ### Build
 
@@ -48,19 +48,26 @@ The compiled module (`rdma_module*.so`) is placed in `build/lib/` and loaded aut
 
 ### Run
 
+The server has to be started first with the usual steps for bitstream loading, driver insertion and kick-off of the software. The same arguments as later for the client (buffer size, number of reps etc.) need to be applied.
+
+Also on the client side, driver and bitstream need to be loaded first. Afterwards, we run `client_py/example.py`: 
+
 ```bash
-python3 example_CPU.py [--threads N] [--n-runs R] [--n-transfers T] [--buffer-size B]
+python3 example.py --server-ip <server-IP> [--threads N] [--n-runs R] [--n-transfers T] [--buffer-size B]
 ```
 
+- `--server-ip`: IP address of the server node (required).
 - `--threads`: number of CPU threads for the NumPy preprocessing loop (default 1); sweep 1–N to reproduce the thread-scaling curve in Figure 9.
 - `--n-runs` / `--n-transfers`: averaging repetitions / transfers per data point (defaults 10 / 64).
 - `--buffer-size`: pinned CPU buffer in bytes (default 128 MB).
 
-The preprocessing pipeline matches the FPGA kernel: `max(x, 0)` + `log1p` on the first 16 of 48 int32 columns, modulo 8192 on the remaining 32.
 
-## Hardware
+## CREED-offloaded ML-preprocessing
+As shown in the paper, we have two setups with offloaded ML-preprocessing: Either using explicit memory copies from CPU memory to the GPUs, or leveraging the GPU-direct feature. In both cases, the used hardware is the same on both nodes, while the software for the client differs (server remains the same): 
 
-Build the FPGA bitstream from `hw/`:
+### Hardware
+
+The bitstream on the server side can remain the basic one from the very beginning, also used in the experiment before. On the client, we now need a bitstream with offloaded preprocessing. Build the FPGA bitstream for the client from `hw/`:
 
 ```bash
 cd hw/
@@ -70,7 +77,7 @@ cmake .. && make
 
 `BUILD_OPT=1` is set in the CMakeLists because timing closure with the RDMA stack is tight; expect long synthesis times.
 
-## Software
+### Software
 
 Server and client are built separately. All paths in the CMake scripts have been updated to work from this location in the repository.
 
@@ -85,35 +92,14 @@ mkdir build_client && cd build_client
 cmake .. -DINSTANCE=client && make
 ```
 
+In the original state of the repo, `sw/src/client/main.cpp` reflects the setup 2, with explicit CPU-GPU copies. 
 To reproduce setup ③ (GPU P2P, Figure 10), copy `main_rdma_gpu.cpp` over `main.cpp` before building the client:
 
 ```bash
 cp src/client/main_rdma_gpu.cpp src/client/main.cpp
 ```
 
+After that, recompile and rerun. We provide both setups (2 + 3, CPU-GPU copies and direct to GPU) in the two distincly named files `main_rdma_cpu_gpu.cpp` and `main_rdma_gpu.cpp`, so that this overwriting can be reverted any time later. 
+
 The `AMD_GPU` CMake variable defaults to `gfx90a` (MI210); override with `-DAMD_GPU=<arch>` if your GPU differs.
 
-## Running
-
-**Always start the server first.** The server is the passive party in the QP bootstrap exchange.
-
-```bash
-# Server node
-./build_server/test [-o 0|1] [-r N] [-x MIN] [-X MAX]
-
-# Client node
-./build_client/test -i <server-CPU-IP> [-o 0|1] [-r N] [-x MIN] [-X MAX]
-```
-
-- `-i`: server CPU IP on the management network (not the FPGA data-network address).
-- `-o 0`: RDMA READ (default); `-o 1`: RDMA WRITE.
-- `-r`: repetitions per data point (default 10).
-- `-x` / `-X`: min/max buffer size in bytes (defaults 64 / 1 048 576).
-
-Reference output from a prior run is in `sw/src/client/extract_output.txt`. Expected results match Figures 9 and 10 of the paper: the FPGA-offloaded path reaches ~8500 MB/s (PCIe-switch limited between FPGA and GPU), while vanilla CPU preprocessing tops out at ~1190 MB/s regardless of thread count; GPU-direct delivery (setup ③) saves 20–135 µs of latency compared to the CPU-staged path (setup ②).
-
-## Status and Known Issues
-
-- **Pipeline stage placeholder.** `ml_preprocessing.cpp` calls `Dense_Log` twice instead of routing through `Sparse_HexToIntMod`. The sparse-feature stage is defined in `ml_preprocessing.hpp` but currently commented out at the call site.
-- **Float / int handling in dense stages.** Inside `Dense_NegsToZero` and the input side of `Dense_Log`, the 32-bit lane is loaded as `int` rather than reinterpreted as `float` via the `conv` union. This gives wrong results for negative-signed-bit float inputs.
-- **Variants not built by default.** `*_rdma_gpu.cpp` must be manually renamed over `main.cpp` before invoking CMake.

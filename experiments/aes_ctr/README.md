@@ -2,8 +2,17 @@
 
 Testing the AES CTR offload in CREED requires a two-fold approach to get both the hardware-accelerated numbers and the software baseline shown in the paper. The process for obtaining these numbers is described below: 
 
-#### CREED-offloaded AES CTR hardware: 
-For this purpose, new bitstreams need to be built, following the standard Coyote approach applied to the directory `aes_ctr/balboa_offload`. The paths in the Cmake-file have been edited to work from the current location of the repository. After obtaining the bitstream, one can use the "plain software" from `Coyote/examples/09_perf_rdma/sw` to run both latency and throughput numbers. This also means that the same parameters (IP-address for out-of-band connection and QP-exchange, number of repetitions, message size scaling etc.) can be used as before. 
+#### CREED-offloaded AES CTR hardware:
+For this purpose, new bitstreams need to be built, following the standard Coyote approach applied to the directory `aes_ctr/balboa_offload/hw/`. The paths in the CMakeLists have been edited to work from the current location of the repository:
+
+```bash
+cd experiments/aes_ctr/balboa_offload/hw
+mkdir build_hw && cd build_hw
+cmake ../ -DFDEV_NAME=u55c
+make project && make bitgen
+```
+
+The bitstream is produced at `experiments/aes_ctr/balboa_offload/hw/build_hw/bitstreams/cyt_top.bit`. Flash it and load the driver exactly as described in `experiments/throughput_evaluation/README.md` (steps 2–3), substituting this bitstream path. After that, use the standard server/client binaries from `Coyote/examples/09_perf_rdma/sw` (built as described in step 4 of that README) to run both latency and throughput numbers with the same parameters (IP-address for out-of-band QP-exchange, number of repetitions, message size scaling, etc.). 
 
 #### SW-Baseline
 
