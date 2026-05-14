@@ -7,7 +7,7 @@ We have used the AMD Alveo U55C FPGA for all experiments in the paper. For that 
 
 To get started with this artifact, please clone this repository: 
 ```
-git clone --recurse-submodules https://github.com/fpgasystems/BALBOA_AE.git
+git clone --recurse-submodules --branch osdi26-ae --depth 1 https://github.com/fpgasystems/BALBOA_AE.git
 ```
 
 To run the specific experiments, refer to the README.md files in the various subfolders as described in the next section on the structure of the repository. 
