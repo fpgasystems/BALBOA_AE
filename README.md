@@ -7,7 +7,7 @@ We have used the AMD Alveo U55C FPGA for all experiments in the paper. For that 
 
 To get started with this artifact, please clone this repository: 
 ```
-git clone --recurse-submodules https://github.com/fpgasystems/CREED_AE.git
+git clone --recurse-submodules https://github.com/fpgasystems/BALBOA_AE.git
 ```
 
 To run the specific experiments, refer to the README.md files in the various subfolders as described in the next section on the structure of the repository. 
@@ -43,3 +43,6 @@ If you find this repository useful, please use the following citation:
 
 ### Additional remark
 We are in contact with our shepherd and the conference chairs to officially rename the paper to "RoCE BALBOA: Service-Enhanced RDMA Offload Engine for Data Center SmartNICs", thus naming the presented system BALBOA rather than CREED. We originally switched the system name for reasons of double-blindness. As we have no final confirmation for being allowed to switch back to BALBOA, this artefact sticks to "CREED" as system name, but reflects the original "BALBOA" naming convention in some file- and path names. 
+
+### License
+The core CREED-code as embedded in Coyote is under the license specified in [Coyote/LICENSE.md](Coyote/LICENSE.md). 
